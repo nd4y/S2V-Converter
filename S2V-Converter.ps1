@@ -11,6 +11,7 @@
     PS> .\S2V-Converter.ps1 -SFile '.\ForStrokingToys.funscript' -VFile '.\ForVibratingToys.funscript'
 
 #>
+
 #region Param
 param (
     [string]$SFile,
@@ -96,11 +97,6 @@ function Convert-S2V {
     } 
 }
 #endregion Functions
-
-#region Debug
-$SFile = "\\192.168.0.10\CloudSync\Yandex.Disk\Torrents\Haptic\test.txt"
-$VFile = "\\192.168.0.10\CloudSync\Yandex.Disk\Torrents\Haptic\The Box-S2V.txt"
-#endregion Debug
 
 #region Main script
 try {
