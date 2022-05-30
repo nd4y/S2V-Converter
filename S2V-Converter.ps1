@@ -1,9 +1,28 @@
+<#
+    .SYNOPSIS
+    funscript Stroke to Vibrate converter.
+
+    .DESCRIPTION
+    The script converts the stroking toy funscript to the vibrating toy funscript.
+    The conversion logic is taken from the topic on the forum https://discuss.eroscripts.com/t/guide-transforming-a-stroking-script-into-a-vibration-script-with-simple-tools/37730
+    Tested on ScriptPlayer 1.10 https://github.com/FredTungsten/ScriptPlayer/releases/tag/1.1.0
+
+    .EXAMPLE
+    PS> .\S2V-Converter.ps1 -SFile '.\ForStrokingToys.funscript' -VFile '.\ForVibratingToys.funscript'
+
+#>
+#region Param
 param (
     [string]$SFile,
     [string]$VFile
 )
+#endregion Param
 
+#region Script settigns
 $ErrorActionPreference = 'Stop'
+#endregion Script settings
+
+#region Functions
 function Convert-S2V {
     param (
         [string]$SFile,
@@ -15,7 +34,7 @@ function Convert-S2V {
         $SFileContent = Get-Content $SFile
     }
     catch {
-        Write-Error -Message "Cannot read $SFile"
+        Write-Error -Message "Cannot read $SFile. $_"
     }
 
     try {
@@ -23,14 +42,14 @@ function Convert-S2V {
         $SFileObject = $SFileContent | ConvertFrom-Json
     }
     catch {
-        Write-Error -Message "$SFile in not valid JSON"
+        Write-Error -Message "$SFile is not valid JSON. $_"
     }
 
     $Array = @(
         [PSCustomObject]@{
-            'at'  = [int]0
-            'pos' = [int]0.0001
-            'Delta' = [int]0.0001
+            'at'    = [int]0
+            'pos'   = [int]0.0001
+            'delta' = [int]0.0001
         }
     )
 
@@ -39,11 +58,12 @@ function Convert-S2V {
         $SFileObject.actions | Sort-Object -Property 'at' -Descending | Foreach-Object {
             $Array += [PSCustomObject]@{
                 'at'    = $_.at
-                'Delta' = [Math]::Abs(($Array.pos[-1]-$_.pos)/($Array.at[-1]-$_.at))
+                'pos'   = $_.pos
+                'delta' = [Math]::Abs(($Array.pos[-1]-$_.pos)/($Array.at[-1]-$_.at))
             }
         }
     
-        $MAX = ($Array.Delta | Sort-Object)[-1]
+        $MAX = ($Array.delta | Sort-Object)[-1]
         $Actions = @()
         $Array | Foreach-Object {
             $Actions += [PSCustomObject]@{
@@ -73,11 +93,23 @@ function Convert-S2V {
     }
     catch {
         Write-Error -Message $_
-    }
-    Write-Host "Finished" -ForegroundColor 'Yellow'  
+    } 
 }
+#endregion Functions
 
-#$SourceFilePath = "\\192.168.0.10\CloudSync\Yandex.Disk\Torrents\Haptic\The Box-origin.txt"
-#$DestinationFilePath = "\\192.168.0.10\CloudSync\Yandex.Disk\Torrents\Haptic\The Box-S2V.txt"
+#region Debug
+$SFile = "\\192.168.0.10\CloudSync\Yandex.Disk\Torrents\Haptic\test.txt"
+$VFile = "\\192.168.0.10\CloudSync\Yandex.Disk\Torrents\Haptic\The Box-S2V.txt"
+#endregion Debug
 
-Convert-S2V -SFile $SFile -VFile $VFile
+#region Main script
+try {
+    $Runtime = Measure-Command {
+        Convert-S2V -SFile $SFile -VFile $VFile
+    }
+    Write-Host "Conversion completed in $($Runtime.TotalSeconds) seconds" -ForegroundColor 'Yellow'
+}
+catch {
+    Write-Error -Message $_
+}
+#endregion Main script
